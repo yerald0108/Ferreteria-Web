@@ -80,8 +80,10 @@ def register(request):
                     'email_verified': False,
                 }
             )
-            
-            send_verification_email(user, request)
+            try:
+                send_verification_email(user, request)
+            except Exception as e:
+                print(f"Error enviando email: {e}")
             login(request, user)
             messages.success(request, '¡Cuenta creada! Por favor verifica tu email para mayor seguridad.')
             return redirect('shop:profile')

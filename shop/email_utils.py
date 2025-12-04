@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 from django.urls import reverse
+import threading
 
 
 def send_verification_email(user, request):
@@ -37,7 +38,7 @@ def send_verification_email(user, request):
     email.attach_alternative(html_content, "text/html")
     
     try:
-        email.send()
+        threading.Thread(target=lambda: email.send(fail_silently=True), daemon=True).start()
         return True
     except Exception as e:
         print(f"Error al enviar email de verificación: {e}")
@@ -71,7 +72,7 @@ def send_order_confirmation_email(order):
     email.attach_alternative(html_content, "text/html")
     
     try:
-        email.send()
+        threading.Thread(target=lambda: email.send(fail_silently=True), daemon=True).start()
         return True
     except Exception as e:
         print(f"Error al enviar email de confirmación: {e}")
@@ -103,7 +104,7 @@ def send_order_status_update_email(order):
     email.attach_alternative(html_content, "text/html")
     
     try:
-        email.send()
+        threading.Thread(target=lambda: email.send(fail_silently=True), daemon=True).start()
         return True
     except Exception as e:
         print(f"Error al enviar email de actualización: {e}")
@@ -132,7 +133,7 @@ def send_welcome_email(user):
     email.attach_alternative(html_content, "text/html")
     
     try:
-        email.send()
+        threading.Thread(target=lambda: email.send(fail_silently=True), daemon=True).start()
         return True
     except Exception as e:
         print(f"Error al enviar email de bienvenida: {e}")
