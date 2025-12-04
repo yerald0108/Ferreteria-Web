@@ -64,29 +64,54 @@ def register(request):
         user_form = UserRegistrationForm(request.POST)
         
         if user_form.is_valid():
-            # Crear usuario
-            user = user_form.save(commit=False)
-            user.is_active = True
-            user.save()
-            
-            # Crear perfil vacío (se completará en /perfil/)
-            UserProfile.objects.get_or_create(
-                user=user,
-                defaults={
-                    'phone': '',
-                    'address': '',
-                    'city': '',
-                    'province': '',
-                    'email_verified': False,
-                }
-            )
             try:
-                send_verification_email(user, request)
+                # Crear usuario
+                user = user_form.save(commit=False)
+                user.is_active = True
+                user.save()
+                
+                # Crear perfil vacío (se completará en /perfil/)
+                profile, created = UserProfile.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'phone': '',
+                        'address': '',
+                        'city': '',
+                        'province': '',
+                        'email_verified': False,
+                    }
+                )
+                
+                # Intentar enviar email sin bloquear
+                try:
+                    send_verification_email(user, request)
+                except Exception as e:
+                    print(f"Error enviando email de verificación: {e}")
+                    messages.warning(
+                        request, 
+                        'Cuenta creada pero no pudimos enviar el email de verificación. '
+                        'Puedes solicitarlo nuevamente desde tu perfil.'
+                    )
+                
+                # Login
+                login(request, user)
+                messages.success(
+                    request, 
+                    '¡Cuenta creada exitosamente! Por favor completa tu información de contacto.'
+                )
+                return redirect('shop:profile')
+                
             except Exception as e:
-                print(f"Error enviando email: {e}")
-            login(request, user)
-            messages.success(request, '¡Cuenta creada! Por favor verifica tu email para mayor seguridad.')
-            return redirect('shop:profile')
+                print(f"Error en registro: {e}")
+                messages.error(
+                    request, 
+                    'Hubo un error al crear tu cuenta. Por favor intenta de nuevo.'
+                )
+        else:
+            # Mostrar errores del formulario
+            for field, errors in user_form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         user_form = UserRegistrationForm()
     
